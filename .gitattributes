@@ -1,0 +1,14 @@
+* text=auto
+*.py text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.spec text eol=lf
+*.command text eol=lf
+*.cmd text eol=crlf
+*.ico binary
+*.icns binary
+*.yml text eol=lf
+packaging/windows/supplemental-notices/* -whitespace
