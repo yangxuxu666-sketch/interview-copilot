@@ -1,0 +1,40 @@
+# Credentials, profiles, recorded material and runtime state
+**/data/
+**/browser-profile/
+**/models/
+**/model-cache/
+**/secrets*
+**/state.json
+**/instance.json
+**/overlay-ready*.json
+**/startup-error.txt
+**/*.log
+.env
+.env.*
+!.env.example
+# Python and tools
+**/.venv/
+**/.build-venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+# Local outputs; publish archives as Release assets instead
+/build/
+/dist/
+/mac-dist/
+/work/
+/outputs/
+*.zip
+*.dmg
+*.app/
+*.exe
+*.dll
+*.pyd
+# Local editor/system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
