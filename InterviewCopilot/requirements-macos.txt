@@ -1,0 +1,11 @@
+# macOS 13+ cloud edition. Install with Python 3.13 on the target Mac.
+-r requirements.txt
+dashscope==1.27.4
+audioop-lts==0.2.2; python_version >= "3.13"
+keyring==25.7.0; sys_platform == "darwin"
+pyobjc-framework-Cocoa==12.2.2; sys_platform == "darwin"
+pyobjc-framework-Quartz==12.2.2; sys_platform == "darwin"
+pyobjc-framework-CoreAudio==12.2.2; sys_platform == "darwin"
+pyobjc-framework-CoreMedia==12.2.2; sys_platform == "darwin"
+pyobjc-framework-ScreenCaptureKit==12.2.2; sys_platform == "darwin"
+pyobjc-framework-libdispatch==12.2.2; sys_platform == "darwin"

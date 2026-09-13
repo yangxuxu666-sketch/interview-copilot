@@ -1,0 +1,5 @@
+# Windows cloud edition; local Whisper is deliberately optional.
+-r ../../InterviewCopilot/requirements.txt
+PyAudioWPatch==0.2.12.8; sys_platform == "win32"
+dashscope==1.27.4
+audioop-lts==0.2.2; python_version >= "3.13"

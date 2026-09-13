@@ -1,0 +1,6 @@
+# Optional Windows system-audio capture and local CPU speech recognition.
+# Primary project metadata verified 2026-09-10; Python 3.13 Windows wheels exist.
+PyAudioWPatch==0.2.12.8; sys_platform == "win32"
+faster-whisper==1.2.1
+dashscope==1.27.4
+audioop-lts==0.2.2; python_version >= "3.13"
