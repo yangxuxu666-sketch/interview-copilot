@@ -130,7 +130,9 @@ def main():
             checks.append("Packaged web assets and UTF-8 text import")
             if args.overlay:
                 stage = "native overlay (requires a logged-in Mac desktop)"
-                result = client.post(base + "/api/overlay/open", json={})
+                # The server allows six seconds for the companion to map its
+                # window; do not let the default five-second HTTP timeout win.
+                result = client.post(base + "/api/overlay/open", json={}, timeout=12)
                 result.raise_for_status()
                 require(result.json()["opened"], "Native overlay did not open; check for a logged-in desktop and bundled Tcl/Tk")
                 client.post(base + "/api/overlay/close").raise_for_status()
