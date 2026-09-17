@@ -40,6 +40,9 @@ app = BUNDLE(coll, name="面试伴航.app", icon=str(HERE / "app.icns"),
     bundle_identifier="local.interviewcopilot.desktop", version="1.0.0",
     info_plist={
         "CFBundleDisplayName": "面试伴航",
+        # COLLECT sorts its entries; the ASCII helper sorts before the Chinese
+        # main filename. Do not let BUNDLE infer Finder's entry point from that.
+        "CFBundleExecutable": "面试伴航",
         "CFBundleShortVersionString": "1.0.0",
         "LSMinimumSystemVersion": ".".join(platform.mac_ver()[0].split(".")[:2]),
         # COLLECT inherits console=True from the companion worker. Explicitly
