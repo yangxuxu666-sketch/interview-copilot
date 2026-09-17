@@ -1,4 +1,4 @@
-"""Build on a real Mac and ZIP with ditto, preserving app symlinks and modes."""
+"""Build a native Mac app, ZIP archive, and drag-to-Applications DMG on macOS."""
 from __future__ import annotations
 import argparse
 import hashlib
@@ -15,6 +15,33 @@ from collect_notices import collect
 from make_icon import generate
 
 HERE = Path(__file__).resolve().parent
+
+
+def write_digest(path: Path) -> str:
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    path.with_suffix(path.suffix + ".sha256.txt").write_text(
+        digest + "  " + path.name + "\n", encoding="utf-8"
+    )
+    return digest
+
+
+def make_dmg(app: Path, package: Path, destination: Path) -> None:
+    """Create a Finder-friendly image without putting runtime data in it."""
+    root = package.parent / "dmg-root"
+    root.mkdir()
+    shutil.copytree(app, root / app.name, symlinks=True)
+    os.symlink("/Applications", root / "Applications")
+    for name in ("先看这里.txt", "LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "THIRD_PARTY_MANIFEST.json", "构建信息.json"):
+        source = package / name
+        if source.is_file():
+            shutil.copyfile(source, root / name)
+    licenses = package / "licenses"
+    if licenses.is_dir():
+        shutil.copytree(licenses, root / "licenses", symlinks=True)
+    subprocess.run([
+        "/usr/bin/hdiutil", "create", "-ov", "-format", "UDZO", "-volname", "面试伴航",
+        "-srcfolder", str(root), str(destination),
+    ], check=True)
 
 
 def main():
@@ -69,10 +96,15 @@ def main():
             raise RuntimeError(f"Bundle symlink points outside the app: {rel}")
     destination = output / ("面试伴航-Mac-云端版-" + platform.machine() + ".zip")
     subprocess.run(["/usr/bin/ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(package), str(destination)], check=True)
-    digest = hashlib.sha256(destination.read_bytes()).hexdigest()
-    destination.with_suffix(".sha256.txt").write_text(digest + "  " + destination.name + "\n", encoding="utf-8")
-    print(json.dumps({"archive": str(destination), "sha256": digest, "bytes": destination.stat().st_size,
-                      **build_info}, ensure_ascii=False, indent=2))
+    digest = write_digest(destination)
+    dmg = output / ("面试伴航-Mac-云端版-" + platform.machine() + ".dmg")
+    make_dmg(app, package, dmg)
+    dmg_digest = write_digest(dmg)
+    print(json.dumps({
+        "archive": str(destination), "sha256": digest, "bytes": destination.stat().st_size,
+        "dmg": str(dmg), "dmg_sha256": dmg_digest, "dmg_bytes": dmg.stat().st_size,
+        **build_info,
+    }, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
