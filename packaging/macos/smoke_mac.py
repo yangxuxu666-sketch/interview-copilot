@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import plistlib
 import socket
 import subprocess
 import sys
@@ -48,7 +49,11 @@ def main():
     if sys.platform != "darwin":
         raise SystemExit("Run this smoke check on macOS.")
     app = args.app.resolve()
-    exe = app / "Contents/MacOS/面试伴航"
+    with (app / "Contents/Info.plist").open("rb") as source_plist:
+        app_info = plistlib.load(source_plist)
+    require(app_info.get("CFBundleExecutable") == "面试伴航",
+            "Finder's CFBundleExecutable must select the main application, not its worker")
+    exe = app / "Contents/MacOS" / app_info["CFBundleExecutable"]
     worker = exe.with_name("InterviewCopilot-worker")
     if not exe.is_file() or not worker.is_file():
         raise RuntimeError("The app or its worker is missing.")
@@ -67,7 +72,7 @@ def main():
     if child.returncode != 1 or worker_reply != {"ok": False, "error": "protocol"}:
         raise RuntimeError(f"Frozen worker failed its JSON protocol check (exit {child.returncode}).\n"
                            f"stdout:\n{output_tail(child.stdout)}\nstderr:\n{output_tail(child.stderr)}")
-    checks = ["Frozen helper dispatch and redirected JSON output"]
+    checks = ["Finder entry point selects the main application", "Frozen helper dispatch and redirected JSON output"]
     with tempfile.TemporaryDirectory(prefix="interview-mac-smoke-") as directory, tempfile.TemporaryFile() as output:
         data = Path(directory)
         with socket.socket() as listener:
