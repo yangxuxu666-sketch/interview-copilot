@@ -78,6 +78,8 @@ def main():
         raise RuntimeError("The Mac application or its helper was not produced.")
     with (app / "Contents" / "Info.plist").open("rb") as source_plist:
         app_info = plistlib.load(source_plist)
+    if app_info.get("CFBundleExecutable") != executable.name:
+        raise RuntimeError("Finder's app entry point must be the main executable, not its companion worker.")
     if app_info.get("LSBackgroundOnly") is not False:
         raise RuntimeError("The app is marked background-only; the native answer window requires GUI access.")
     subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(app)], check=True)
@@ -101,10 +103,10 @@ def main():
             raise RuntimeError(f"Private runtime file found in bundle: {rel}")
         if path.is_symlink() and not path.resolve().is_relative_to(package.resolve()):
             raise RuntimeError(f"Bundle symlink points outside the app: {rel}")
-    destination = output / ("面试伴航-Mac-云端版-" + platform.machine() + ".zip")
+    destination = output / ("InterviewCopilot-macOS-" + platform.machine() + ".zip")
     subprocess.run(["/usr/bin/ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(package), str(destination)], check=True)
     digest = write_digest(destination)
-    dmg = output / ("面试伴航-Mac-云端版-" + platform.machine() + ".dmg")
+    dmg = output / ("InterviewCopilot-macOS-" + platform.machine() + ".dmg")
     make_dmg(app, package, dmg)
     dmg_digest = write_digest(dmg)
     print(json.dumps({
