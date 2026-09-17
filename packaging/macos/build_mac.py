@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import plistlib
 import shutil
 import subprocess
 import sys
@@ -75,9 +76,15 @@ def main():
     worker = executable.with_name("InterviewCopilot-worker")
     if not executable.is_file() or not worker.is_file():
         raise RuntimeError("The Mac application or its helper was not produced.")
+    with (app / "Contents" / "Info.plist").open("rb") as source_plist:
+        app_info = plistlib.load(source_plist)
+    if app_info.get("LSBackgroundOnly") is not False:
+        raise RuntimeError("The app is marked background-only; the native answer window requires GUI access.")
     subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(app)], check=True)
+    # collect() already opened a Tk root in this desktop session. Also verify
+    # the frozen companion's Tcl/Tk libraries and window-open/close protocol.
     subprocess.run([sys.executable, str(HERE / "smoke_mac.py"), "--app", str(app),
-                    "--report", str(package / "自动检查结果.json")], check=True)
+                    "--report", str(package / "自动检查结果.json"), "--overlay"], check=True)
     shutil.copytree(app, package / app.name, symlinks=True)
     license_file = source.parent / "LICENSE"
     if license_file.is_file():
