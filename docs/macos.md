@@ -1,6 +1,6 @@
 # Mac 使用与打包（待实机验证）
 
-仓库提供手动运行的 [GitHub Actions 构建流程](../.github/workflows/build-macos.yml)，分别构建 Apple 芯片与 Intel 版本。它只在主动选择 Run workflow 后运行。自动构建检查不包含真实音频、系统授权和小窗的实机验收。
+仓库提供手动运行的 [GitHub Actions 构建流程](../.github/workflows/build-macos.yml)，分别构建 Apple 芯片与 Intel 版本。它只在主动选择 Run workflow 后运行，并创建一个 GitHub 预发布页，附上各架构的 `.dmg`、ZIP 与 SHA-256 文件。自动构建检查不包含真实音频、系统授权和小窗的实机验收。
 
 macOS 适配代码及构建脚本已经准备，**尚未完成 Mac 实机上的系统音频、权限、钥匙串、透明小窗和原生 `.app` 构建验证**。Windows 上的模拟测试不能替代这些检查。
 
@@ -46,7 +46,7 @@ python3.13 -m venv .venv
 .venv/bin/python packaging/macos/build_mac.py --source InterviewCopilot --output dist/macos
 ```
 
-必须在对应架构的真实 Mac 环境中构建。脚本会生成本机架构的 `.app`，执行启动等检查，收集第三方许可，并通过 `ditto` 生成保留应用结构的 ZIP。构建信息记录架构、构建系统和验证限制。
+必须在对应架构的真实 Mac 环境中构建。脚本会生成本机架构的 `.app`，执行启动等检查，收集第三方许可，并通过 `ditto` 生成保留应用结构的 ZIP 和可拖入“应用程序”的 `.dmg`。构建信息记录架构、构建系统和验证限制。
 
 构建脚本目前不执行 Apple 开发者签名和公证；本地签名校验不等于公证。分发产物前，应明确标注签名状态，并按 Apple 官方流程处理系统提示。
 
