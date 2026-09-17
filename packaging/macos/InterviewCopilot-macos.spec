@@ -42,6 +42,9 @@ app = BUNDLE(coll, name="面试伴航.app", icon=str(HERE / "app.icns"),
         "CFBundleDisplayName": "面试伴航",
         "CFBundleShortVersionString": "1.0.0",
         "LSMinimumSystemVersion": ".".join(platform.mac_ver()[0].split(".")[:2]),
+        # COLLECT inherits console=True from the companion worker. Explicitly
+        # retain GUI access for the native Tk answer window in this bundle.
+        "LSBackgroundOnly": False,
         "NSHighResolutionCapable": True,
         "NSScreenCaptureUsageDescription": "监听面试软件播放的系统声音并发送给你配置的语音识别服务；不采集麦克风。",
         "NSAudioCaptureUsageDescription": "将电脑播放的面试官声音转为文字；不采集麦克风。",
