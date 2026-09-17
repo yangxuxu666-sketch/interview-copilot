@@ -1,0 +1,83 @@
+name: Build and publish Mac preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "GitHub 预发布标签，例如 mac-preview-v0.1.0"
+        required: true
+        default: "mac-preview-v0.1.0"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: macOS ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+            python_arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+            python_arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13.15'
+          architecture: ${{ matrix.python_arch }}
+      - name: Install build components
+        run: |
+          python -m venv .build-venv
+          .build-venv/bin/python -m pip install --only-binary=:all: -r InterviewCopilot/requirements-macos.txt -r packaging/macos/requirements-build.txt
+          .build-venv/bin/python -c "import platform, tkinter; import CoreAudio, CoreMedia, ScreenCaptureKit, dispatch; assert platform.machine() == '${{ matrix.arch }}'"
+      - name: Build and check app
+        run: .build-venv/bin/python packaging/macos/build_mac.py --source InterviewCopilot --output mac-dist
+      - name: Upload Mac install files
+        uses: actions/upload-artifact@v4
+        with:
+          name: InterviewCopilot-macOS-${{ matrix.arch }}
+          path: |
+            mac-dist/*.zip
+            mac-dist/*.dmg
+            mac-dist/*.sha256.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub prerelease
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Mac install files
+        uses: actions/download-artifact@v4
+        with:
+          pattern: InterviewCopilot-macOS-*
+          path: release
+          merge-multiple: true
+      - name: Create or update prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Release tag may contain only letters, numbers, dot, underscore, and hyphen."
+            exit 1
+          fi
+          notes='两份安装包分别适用于 Apple 芯片（arm64）和 Intel（x86_64）Mac。此预览版未进行 Apple 开发者签名和公证；下载前请核对 SHA-256，首次打开请按 macOS 的来源提示处理。'
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/* --clobber
+          else
+            gh release create "$RELEASE_TAG" release/* --target "$GITHUB_SHA" --title "面试伴航 Mac 预览版" --prerelease --notes "$notes"
+          fi
